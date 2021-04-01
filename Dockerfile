@@ -1,16 +1,27 @@
-FROM alpine as prepare
+ARG ARCH=
+FROM ${ARCH}alpine as prepare
 
-ENV XMRIG_VERSION=6.10
-ENV XMRIG_URL=https://github.com/xmrig/xmrig/releases/download/v${XMRIG_VERSION}}/xmrig-${XMRIG_VERSION}-linux-static-x64.tar.gz
+ENV XMRIG_VERSION=v6.10.0
+ENV XMRIG_URL=https://github.com/xmrig/xmrig.git
+# 1. apk add git make cmake libstdc++ gcc g++ automake libtool autoconf linux-headers
+# 2. git clone https://github.com/xmrig/xmrig.git
+# 3. mkdir xmrig/build
+# 4. cd xmrig/scripts && ./build_deps.sh && cd ../build
+# 5. cmake .. -DXMRIG_DEPS=scripts/deps -DBUILD_STATIC=ON
+# 6. make -j$(nproc)
+RUN apk add git make cmake libstdc++ gcc g++ automake libtool autoconf linux-headers
 
-ADD ${XMRIG_URL} /
+RUN git clone ${XMRIG_URL} /xmrig && \
+    cd /xmrig && git checkout ${XMRIG_VERSION}
 
-RUN mkdir -p /xmrig/conf \
-    tar -xf /xmrig-${XMRIG_VERSION}-linux-static-x64.tar.gz -C /xmrig --strip-components=1
+RUN mkdir -p /xmrig/build 
+RUN cd /xmrig/scripts && ./build_deps.sh && cd ../build
+RUN cmake /xmrig -DXMRIG_DEPS=scripts/deps -DBUILD_STATIC=ON
+RUN make -j$(nproc)
 
-ADD config.json /xmrig/conf/
+ADD config.json /xmrig/build/conf/
 
-FROM alpine
+FROM ${ARCH}alpine
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -20,7 +31,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vcs-ref=$VCS_REF \
       org.label-schema.schema-version="1.0.0-rc1"
 
-COPY --from=prepare /xmrig /xmrig
+COPY --from=prepare /xmrig/build /xmrig
 
 ADD start.sh /
 
