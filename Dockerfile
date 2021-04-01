@@ -14,10 +14,10 @@ RUN apk add git make cmake libstdc++ gcc g++ automake libtool autoconf linux-hea
 RUN git clone ${XMRIG_URL} /xmrig && \
     cd /xmrig && git checkout ${XMRIG_VERSION}
 
-RUN mkdir -p /xmrig/build 
-RUN cd /xmrig/scripts && ./build_deps.sh && cd ../build
-RUN cmake /xmrig -DXMRIG_DEPS=scripts/deps -DBUILD_STATIC=ON
-RUN make -j$(nproc)
+RUN mkdir -p /xmrig/build && \
+    cd /xmrig/scripts && ./build_deps.sh && cd ../build && \
+    cmake .. -DXMRIG_DEPS=scripts/deps -DBUILD_STATIC=ON && \
+    make -j$(nproc) 
 
 ADD config.json /xmrig/build/conf/
 
@@ -31,7 +31,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vcs-ref=$VCS_REF \
       org.label-schema.schema-version="1.0.0-rc1"
 
-COPY --from=prepare /xmrig/build /xmrig
+COPY --from=prepare /xmrig/build/xmrig /xmrig/xmrig
 
 ADD start.sh /
 
