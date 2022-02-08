@@ -1,7 +1,7 @@
 ARG ARCH=
 FROM ${ARCH}alpine as prepare
 
-ENV XMRIG_VERSION=v6.16.3
+ENV XMRIG_VERSION=v6.16.4
 ENV XMRIG_URL=https://github.com/xmrig/xmrig.git
 # 1. apk add git make cmake libstdc++ gcc g++ automake libtool autoconf linux-headers
 # 2. git clone https://github.com/xmrig/xmrig.git
