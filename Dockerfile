@@ -9,14 +9,19 @@ ENV XMRIG_URL=https://github.com/xmrig/xmrig.git
 # 4. cd xmrig/scripts && ./build_deps.sh && cd ../build
 # 5. cmake .. -DXMRIG_DEPS=scripts/deps -DBUILD_STATIC=ON
 # 6. make -j$(nproc)
-RUN apk add git make cmake libstdc++ gcc g++ automake libtool autoconf linux-headers
+RUN echo 'https://dl-cdn.alpinelinux.org/alpine/edge/community' >> /etc/apk/repositories
+RUN apk add git make cmake libstdc++ gcc g++ automake libtool autoconf \
+    linux-headers hwloc-dev libuv-dev openssl-dev
 
 RUN git clone ${XMRIG_URL} /xmrig && \
     cd /xmrig && git checkout ${XMRIG_VERSION}
 
-RUN mkdir -p /xmrig/build && \
-    cd /xmrig/scripts && ./build_deps.sh && cd ../build && \
-    cmake .. -DXMRIG_DEPS=scripts/deps -DBUILD_STATIC=ON && \
+WORKDIR /xmrig/scripts
+RUN mkdir -p /xmrig/build && chmod 755 *.sh\
+    ./build_deps.sh
+WORKDIR /xmrig/build
+RUN cmake .. -DXMRIG_DEPS=scripts/deps -DBUILD_STATIC=ON -DHWLOC_LIBRARY=/usr/lib/libhwloc.so \
+    -DWITH_OPENCL=OFF -DWITH_CUDA=OFF && \
     make -j$(nproc) 
 
 ADD config.json /xmrig/build/conf/
